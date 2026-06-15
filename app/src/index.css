@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* ─── Theme variables ──────────────────────────────────────────── */
+@theme {
+  --color-brand-primary:       #2563eb;
+  --color-brand-primary-hover: #1d4ed8;
+  --color-brand-success:       #059669;
+  --color-brand-surface:       #f8fafc;
+  --color-brand-border:        #e2e8f0;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --radius-xl: 14px;
+  --radius-lg: 10px;
+  --radius-md: 6px;
+}
+
+/* ─── WP admin footer killer ───────────────────────────────────── */
+.toplevel_page_ignite-bookings #wpfooter,
+.ignite-bookings_page_ignite-booking-calendar #wpfooter,
+.ignite-bookings_page_ignite-booking-services #wpfooter,
+.ignite-bookings_page_ignite-booking-staff #wpfooter,
+.ignite-bookings_page_ignite-booking-customers #wpfooter,
+.ignite-bookings_page_ignite-booking-settings #wpfooter {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+}
+
+#wpbody-content { padding-bottom: 0 !important; }
+
+.wrap h1.font-black, .wrap h2.font-black,
+.wrap h1.font-bold,  .wrap h2.font-bold  { font-weight: 900; }
+
+/* ─── Public booking — theme CSS reset ────────────────────────────
+ * Scoped to the shortcode mount point so nothing leaks in from the
+ * active WordPress theme (fonts, margins, button resets, etc.)
+ * ---------------------------------------------------------------- */
+#ignite-public-booking-connector {
+  all: revert;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #0f172a !important;
+  text-align: left !important;
+  -webkit-font-smoothing: antialiased;
+  background: transparent !important;
+  box-sizing: border-box;
+}
+
+#ignite-public-booking-connector *,
+#ignite-public-booking-connector *::before,
+#ignite-public-booking-connector *::after {
+  box-sizing: border-box;
+}
+
+/* Re-declare Tailwind's base resets inside the scope so theme
+   button / input / anchor styles don't bleed through */
+#ignite-public-booking-connector button,
+#ignite-public-booking-connector input,
+#ignite-public-booking-connector textarea,
+#ignite-public-booking-connector select,
+#ignite-public-booking-connector label {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  margin: 0;
+}
+
+#ignite-public-booking-connector a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#ignite-public-booking-connector img {
+  max-width: 100%;
+  display: block;
+}

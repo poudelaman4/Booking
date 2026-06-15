@@ -1,0 +1,16 @@
+{
+    "name": "poude/ignite-bookings",
+    "type": "wordpress-plugin",
+    "autoload": {
+        "psr-4": {
+            "IgniteBookings\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Aman Paudel",
+            "email": "you@example.com"
+        }
+    ],
+    "require": {}
+}
