@@ -17,7 +17,7 @@ class SlotGenerator {
 
         $exception = $wpdb->get_row($wpdb->prepare(
             "SELECT exception_type, start_time, end_time 
-             FROM {$wpdb->prefix}ignite_employee_availability_exceptions
+             FROM {$wpdb->prefix}ignite_availability_exceptions
              WHERE employee_id = %d AND exception_date = %s LIMIT 1",
             $employee_id, $date
         ));
