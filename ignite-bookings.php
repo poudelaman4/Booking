@@ -11,6 +11,14 @@ if (!defined('ABSPATH')) exit;
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
 }
+// Inside your main root file (ignite-bookings.php), right below your Composer autoloader check:
+if (file_exists(__DIR__ . '/blocks/canvas-builder/register.php')) {
+    require_once __DIR__ . '/blocks/canvas-builder/register.php';
+}
+// Inside your main root file (ignite-bookings.php), right under the canvas-builder layout inclusion line:
+if (file_exists(__DIR__ . '/blocks/lists/register.php')) {
+    require_once __DIR__ . '/blocks/lists/register.php';
+}
 
 // Run the core plugin initializer matrix
 add_action('plugins_loaded', function () {
