@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "ignite-bookings/services-list",
+  "title": "Ignite Services List",
+  "category": "widgets",
+  "icon": "list-view",
+  "description": "Displays available salon services from the database.",
+  "textdomain": "ignite-bookings",
+  "editorScript": "file:./editor.js",
+  "editorStyle":  "file:./editor.css",
+  "viewScript":   "file:./view.js",
+  "style":        "file:./render.css",
+  "render":       "file:./render.php",
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "align": ["wide", "full"],
+    "spacing": { "margin": true, "padding": true },
+    "color":   { "text": true, "background": true },
+    "dimensions": { "minHeight": true }
+  }
+}

@@ -1,0 +1,13 @@
+/* Blue outline so the container boundary is visible while editing */
+.ib-container {
+    outline: 2px dashed #2563eb;
+    outline-offset: -1px;
+    min-height: 60px;
+}
+
+/* Deepen the outline when the block is selected */
+.ib-container.is-selected,
+.ib-container.has-child-selected {
+    outline-color: #1d4ed8;
+    outline-style: solid;
+}
