@@ -14,6 +14,7 @@ class ServicesController extends WP_REST_Controller {
     public function __construct() {
         $this->namespace = RestApi::NAMESPACE;
         $this->rest_base = 'services';
+        // 🌟 RE-ANCHORED TRUTH: Keep repo constructor initialization active
         $this->repo = new ServiceRepository();
     }
 
@@ -31,10 +32,9 @@ class ServicesController extends WP_REST_Controller {
             ],
         ]);
 
-        // 🌟 FIXED ID RE-ROUTING MATRIX BOUND: Open up EDITABLE to bypass Nginx 404 updates crashes [INDEX]
         register_rest_route($this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)', [
             [
-                'methods'             => WP_REST_Server::EDITABLE, // Catch POST/PUT tracking logs [INDEX]
+                'methods'             => WP_REST_Server::EDITABLE, 
                 'callback'            => [$this, 'update_item'],
                 'permission_callback' => [RestApi::class, 'checkAdminPermission'],
             ],
@@ -46,28 +46,25 @@ class ServicesController extends WP_REST_Controller {
         ]);
     }
 
+    /**
+     * 🧠 CLEAN REFACTOR: Bypasses duplicate raw SQL commands by mapping queries straight to the Repository pattern [INDEX]
+     */
     public function get_items($request): WP_REST_Response {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_services';
-        
         $category_id = $request->get_param('category_id');
 
+        // Compile query arguments array structure parameters
+        $args = ['is_active' => 1];
         if (!empty($category_id)) {
-            $results = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM $table WHERE category_id = %d AND is_active = 1 ORDER BY id DESC",
-                (int)$category_id
-            ));
-        } else {
-            $results = $wpdb->get_results("SELECT * FROM $table WHERE is_active = 1 ORDER BY id DESC");
+            $args['category_id'] = (int)$category_id;
         }
+
+        // Pull processed rows array dictionary maps natively from the worker repo layer [INDEX]
+        $results = $this->repo->findAll($args);
 
         return rest_ensure_response($results);
     }
 
     public function create_item($request): \WP_REST_Response|\WP_Error {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_services';
-
         $params = $request->get_json_params();
         if (empty($params)) {
             $params = $request->get_params();
@@ -81,38 +78,18 @@ class ServicesController extends WP_REST_Controller {
             return new WP_Error('missing_category', 'Every individual catalog item card must map explicitly to a category ID target leaf folder.', ['status' => 400]);
         }
 
-        $data = [
-            'name'         => sanitize_text_field($params['name']),
-            'description'  => !empty($params['description']) ? sanitize_textarea_field($params['description']) : null,
-            'duration'     => !empty($params['duration']) ? (int)$params['duration'] : 30,
-            'price'        => !empty($params['price']) ? (float)$params['price'] : 0.00,
-            'category_id'  => (int)$params['category_id'],
-            'is_active'    => 1,
-            'created_at'   => current_time('mysql')
-        ];
-
-        if (isset($params['image_url'])) {
-            $data['image_url'] = esc_url_raw($params['image_url']);
-        }
-
-        $data['slug'] = sanitize_title($data['name']);
-        $inserted = $wpdb->insert($table, $data);
-
-        if (!$inserted) {
+        $new_id = $this->repo->create($params);
+        if (!$new_id) {
             return new WP_Error('db_insert_failed', 'Database layer insertion failure.', ['status' => 500]);
         }
 
-        $data['id'] = $wpdb->insert_id;
-        $response = rest_ensure_response($data);
+        $response = rest_ensure_response(array_merge($params, ['id' => $new_id]));
         $response->set_status(201);
 
         return $response;
     }
 
-    // 🌟 THE DATABASE MODIFIER ENGINE WORKER FOR UPDATING FIELD ROWS [INDEX]
     public function update_item($request): \WP_REST_Response|\WP_Error {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_services';
         $id = (int)$request['id'];
 
         $params = $request->get_json_params();
@@ -120,30 +97,8 @@ class ServicesController extends WP_REST_Controller {
             $params = $request->get_params();
         }
 
-        $data = [
-            'updated_at' => current_time('mysql')
-        ];
-
-        if (isset($params['name'])) {
-            $data['name'] = sanitize_text_field($params['name']);
-            $data['slug'] = sanitize_title($data['name']);
-        }
-        if (isset($params['description'])) {
-            $data['description'] = sanitize_textarea_field($params['description']);
-        }
-        if (isset($params['duration'])) {
-            $data['duration'] = (int)$params['duration'];
-        }
-        if (isset($params['price'])) {
-            $data['price'] = (float)$params['price'];
-        }
-        if (isset($params['image_url'])) {
-            $data['image_url'] = esc_url_raw($params['image_url']);
-        }
-
-        $updated = $wpdb->update($table, $data, ['id' => $id]);
-
-        if ($updated === false) {
+        $updated = $this->repo->update($id, $params);
+        if (!$updated) {
             return new WP_Error('db_update_failed', 'Database layer mutation failure.', ['status' => 500]);
         }
 

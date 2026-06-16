@@ -6,11 +6,16 @@ use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;
 use IgniteBookings\Api\RestApi;
+use IgniteBookings\Repositories\WorkingHoursRepository;
 
 class WorkingHoursController extends WP_REST_Controller {
+    protected WorkingHoursRepository $repo;
+
     public function __construct() {
         $this->namespace = RestApi::NAMESPACE;
         $this->rest_base = 'working-hours';
+        // 🌟 RE-ANCHORED TRUTH: Instantiate your newly expanded repository worker layer
+        $this->repo = new WorkingHoursRepository();
     }
 
     public function register_routes(): void {
@@ -22,7 +27,7 @@ class WorkingHoursController extends WP_REST_Controller {
             ],
             [
                 'methods'             => WP_REST_Server::EDITABLE,
-                'callback' => [$this, 'update_employee_hours'],
+                'callback'            => [$this, 'update_employee_hours'],
                 'permission_callback' => [RestApi::class, 'checkAdminPermission'],
             ],
         ]);
@@ -37,21 +42,15 @@ class WorkingHoursController extends WP_REST_Controller {
     }
 
     /**
-     * 🧠 SELF-HEALING Retrievall ENGINE: Protects your settings grid panels from blank table row exceptions!
-     * If an employee lacks schedule entries, it maps a pristine 9-to-5 default array matrix in real-time [INDEX].
+     * 🧠 SELF-HEALING RETRIEVAL ENGINE: Protects your settings panels from blank exceptions!
+     * Maps a pristine 9-to-5 fallback array matrix natively using repository hooks [INDEX].
      */
     public function get_employee_hours($request) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_working_hours';
-        $employee_id = (int) $request['id'];
+        $employee_id = (int)$request['id'];
 
-        // Pull active entries from your database columns
-        $results = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM $table WHERE employee_id = %d ORDER BY day_of_week ASC", 
-            $employee_id
-        ), OBJECT);
+        // 🧠 REFACTOR ACCESS: Offload direct SQL strings to your isolated Repository worker [INDEX]!
+        $results = $this->repo->getHoursByEmployee($employee_id);
 
-        // 🌟 FIX UNLOCKED: If the result matrix is empty, return a pristine default 9-to-5 map instantly!
         if (empty($results)) {
             $fallback_schedule = [];
             for ($day = 0; $day <= 6; $day++) {
@@ -59,11 +58,11 @@ class WorkingHoursController extends WP_REST_Controller {
                     'id'          => 0,
                     'employee_id' => $employee_id,
                     'day_of_week' => $day,
-                    'start_time'  => '09:00:00', // Default 9 AM
-                    'end_time'    => '17:00:00', // Default 5 PM
+                    'start_time'  => '09:00:00',
+                    'end_time'    => '17:00:00',
                     'break_start' => null,
                     'break_end'   => null,
-                    'is_day_off'  => ($day === 0) ? 1 : 0 // Set Sunday as default day-off
+                    'is_day_off'  => ($day === 0) ? 1 : 0
                 ];
             }
             return rest_ensure_response($fallback_schedule);
@@ -71,45 +70,27 @@ class WorkingHoursController extends WP_REST_Controller {
 
         return rest_ensure_response($results);
     }
+
+    /**
+     * 🧠 REFACTOR ACCESS: Commits bulk schedule updates cleanly via repository atomic syncing [INDEX]
+     */
     public function update_employee_hours($request) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_working_hours';
-        $employee_id = (int) $request['id'];
+        $employee_id = (int)$request['id'];
         $schedules = $request->get_param('schedules');
 
         if (!is_array($schedules)) {
             return new WP_Error('invalid_payload', 'Schedules body format must be an array.', ['status' => 400]);
         }
 
-        foreach ($schedules as $sched) {
-            $day_of_week = (int) $sched['day_of_week'];
-            $start_time  = sanitize_text_field($sched['start_time']);
-            $end_time    = sanitize_text_field($sched['end_time']);
-            $is_day_off  = (int) $sched['is_day_off'];
-
-            $break_start = !empty($sched['break_start']) ? sanitize_text_field($sched['break_start']) : null;
-            $break_end   = !empty($sched['break_end']) ? sanitize_text_field($sched['break_end']) : null;
-
-            // Enforces atomic schedule state sync directly inside database tables
-            $wpdb->query($wpdb->prepare(
-                "INSERT INTO $table (employee_id, day_of_week, start_time, end_time, break_start, break_end, is_day_off) 
-                 VALUES (%d, %d, %s, %s, %s, %s, %d) 
-                 ON DUPLICATE KEY UPDATE start_time = %s, end_time = %s, break_start = %s, break_end = %s, is_day_off = %d",
-                $employee_id, $day_of_week, $start_time, $end_time, $break_start, $break_end, $is_day_off,
-                $start_time, $end_time, $break_start, $break_end, $is_day_off
-            ));
-        }
+        $this->repo->upsertHours($employee_id, $schedules);
 
         return rest_ensure_response(['success' => true]);
     }
 
     /**
-     * 🧠 FIXED METHOD: Persists actual day-off or customized hour exceptions into the database.
+     * 🧠 AUDIT REFACTOR FIXED METHOD: Safely persists exceptions into the table registry [INDEX].
      */
     public function create_availability_exception($request) {
-        global $wpdb;
-        $table = $wpdb->prefix . 'ignite_employee_availability_exceptions';
-
         $employee_id    = (int)$request->get_param('employee_id');
         $exception_date = sanitize_text_field($request->get_param('exception_date'));
         $type           = sanitize_text_field($request->get_param('exception_type')); 
@@ -127,13 +108,16 @@ class WorkingHoursController extends WP_REST_Controller {
             'reason'         => sanitize_text_field($request->get_param('reason'))
         ];
 
-        // Wipe out any existing duplicates for this specific employee date entry before saving fresh parameters
-        $wpdb->delete($table, ['employee_id' => $employee_id, 'exception_date' => $exception_date]);
+        // 🧠 REFACTOR ACCESS: Clear past date duplicates via safe repository helper layers [INDEX]
+        $this->repo->clearDuplicateException($employee_id, $exception_date);
 
-        if (!$wpdb->insert($table, $data)) {
+        // 🌟 AUDIT CORRECTION FIXED: Inserts data straight through the verified database maps to prevent background slot crashes [INDEX]
+        $inserted_id = $this->repo->insertException($data);
+
+        if (!$inserted_id) {
             return new WP_Error('db_error', 'Could not save exception rule.', ['status' => 500]);
         }
 
-        return rest_ensure_response(['success' => true, 'id' => $wpdb->insert_id]);
+        return rest_ensure_response(['success' => true, 'id' => $inserted_id]);
     }
 }
