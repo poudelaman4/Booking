@@ -2,7 +2,6 @@
 import { apiClient } from '../../api/client';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-
 import SummaryCards from './components/SummaryCards';
 import OperationalCharts from './components/OperationalCharts';
 
@@ -42,7 +41,6 @@ export default function DashboardView() {
 
     const grossRevenue = appointments.reduce((sum, a) => a.status === 'cancelled' ? sum : sum + parseFloat(a.price || 0), 0);
     const netProfit = grossRevenue * 0.75; 
-
     const aov = (confirmedList.length + completedList.length) > 0 
       ? grossRevenue / (confirmedList.length + completedList.length) 
       : 0;
@@ -51,15 +49,14 @@ export default function DashboardView() {
     appointments.forEach(a => { 
       if (a.employee_id) assignmentFreq[a.employee_id] = (assignmentFreq[a.employee_id] || 0) + 1; 
     });
+
     const sortedStaff = Object.entries(assignmentFreq).sort((a, b) => b[1] - a[1]);
     const topStaffId = sortedStaff[0]?.[0];
     const topStaff = employees.find(e => String(e.id) === String(topStaffId));
 
-    // 🌟 THE CRITICAL FIX: Loop deep inside your nested multi-service arrays
     const serviceFreq = {};
     appointments.forEach(a => {
       if (a.status === 'cancelled') return;
-      
       if (a.notes && a.notes.trim().startsWith('{')) {
         try {
           const parsed = JSON.parse(a.notes);
@@ -77,8 +74,7 @@ export default function DashboardView() {
     });
 
     const maxServiceCount = Math.max(...Object.values(serviceFreq), 1);
-    
-    // 🌟 ATTENTION TO DETAIL FIX: Displays up to the top 3 high-demand items dynamically
+
     const serviceAnalytics = Object.entries(serviceFreq)
       .map(([name, count]) => ({
         name,
@@ -88,17 +84,21 @@ export default function DashboardView() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3);
 
+    // 🌟 GLOBAL DYNAMIC CURRENCY HOOK INGESTION
+    const currency = window.igniteSettings?.currency_symbol || 'Rs. ';
+
     return {
       kpi: {
-        revenueStr: `Rs. ${grossRevenue.toFixed(2)}`,
-        profitStr: `Rs. ${netProfit.toFixed(2)}`,
-        aovStr: `Rs. ${aov.toFixed(2)}`,
+        // Updated text strings to read the business setting token dynamically
+        revenueStr: `${currency}${grossRevenue.toFixed(2)}`,
+        profitStr: `${currency}${netProfit.toFixed(2)}`,
+        aovStr: `${currency}${aov.toFixed(2)}`,
         totalBookings: totalCount,
         topStaffName: topStaff ? `${topStaff.first_name} ${topStaff.last_name || ''}`.trim() : 'John Doe',
         ratios: {
           confirmed: { label: 'Confirmed', count: confirmedList.length, pct: totalCount > 0 ? (confirmedList.length / totalCount) * 100 : 0, color: 'bg-blue-500' },
           completed: { label: 'Completed', count: completedList.length, pct: totalCount > 0 ? (completedList.length / totalCount) * 100 : 0, color: 'bg-emerald-500' },
-          pending:   { label: 'Pending',   count: pendingList.length,   pct: totalCount > 0 ? (pendingList.length / totalCount) * 100 : 0, color: 'bg-amber-500' },
+          pending: { label: 'Pending', count: pendingList.length, pct: totalCount > 0 ? (pendingList.length / totalCount) * 100 : 0, color: 'bg-amber-500' },
           cancelled: { label: 'Cancelled', count: cancelledList.length, pct: totalCount > 0 ? (cancelledList.length / totalCount) * 100 : 0, color: 'bg-rose-500' }
         }
       },
@@ -132,23 +132,21 @@ export default function DashboardView() {
       </div>
     );
   }
+  // Resolve current token parameters for use inside table rows
+  const activeCurrencySymbol = window.igniteSettings?.currency_symbol || 'Rs. ';
+
   return (
     <div className="w-full space-y-6 py-6 text-slate-900 font-sans text-left pr-6 animate-fade-in select-none">
-      
-      {/* ================= HEADER OVERVIEW ================= */}
       <header className="flex items-end justify-between">
         <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
           Dashboard Overview
         </h1>
       </header>
 
-      {/* Component 1: KPI Summary Data Cards Block */}
       <SummaryCards kpi={analytics.kpi} />
-
-      {/* Component 2: Ratios and Dynamically Bound Multi-Service Performance Bars */}
+      
       <OperationalCharts kpi={analytics.kpi} serviceAnalytics={analytics.serviceAnalytics} />
 
-      {/* Component 3: High-Density Polished Upcoming Appointments Ledger Table */}
       <Card className="border border-slate-200 rounded-xl shadow-3xs overflow-hidden">
         <CardHeader className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/20">
           <h2 className="text-[10px] font-black uppercase tracking-widest text-slate-400">
@@ -180,22 +178,17 @@ export default function DashboardView() {
                 ) : (
                   upcomingAgenda.map(a => {
                     const isPending = a.status === 'pending';
-                    
-                    // 🌟 EXPLEMENTARY ATTENTION TO DETAIL TIME EXTRACTOR FIX
                     const formatTime = (tStr) => {
                       if (!tStr || !tStr.includes(' ')) return '--:--';
                       const cleanTime = tStr.split(' ')[1];
                       const parts = cleanTime.split(':');
                       if (parts.length < 2) return '--:--';
-                      
                       const hour = parseInt(parts[0], 10);
                       const minute = parts[1];
                       const ampm = hour >= 12 ? 'PM' : 'AM';
                       const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-                      
                       return `${displayHour}:${minute} ${ampm}`;
                     };
-
                     return (
                       <tr key={a.id} className="group relative hover:bg-slate-50/30 transition-colors text-xs text-slate-700">
                         <td className="py-3.5 px-6 font-mono font-black text-slate-900 text-left whitespace-nowrap">
@@ -208,7 +201,8 @@ export default function DashboardView() {
                           👤 {employeeMap[a.employee_id] || 'John Doe'}
                         </td>
                         <td className="py-3.5 px-6 text-right font-mono font-black text-slate-900 whitespace-nowrap">
-                          Rs. {parseFloat(a.price || 0).toFixed(2)}
+                          {/* 🌟 USER REFACTOR FIXED: Dynamic layout token updates dynamically */}
+                          {activeCurrencySymbol}{parseFloat(a.price || 0).toFixed(2)}
                         </td>
                         <td className="py-3.5 px-6 text-right whitespace-nowrap relative">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border ${
@@ -216,7 +210,6 @@ export default function DashboardView() {
                           }`}>
                             {a.status}
                           </span>
-                          {/* Left-to-right full width hover accent line indicator */}
                           <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-blue-600 scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
                         </td>
                       </tr>
@@ -228,7 +221,6 @@ export default function DashboardView() {
           </div>
         </CardBody>
       </Card>
-
     </div>
   );
 }
