@@ -94,7 +94,7 @@ export default function DashboardView() {
         profitStr: `${currency}${netProfit.toFixed(2)}`,
         aovStr: `${currency}${aov.toFixed(2)}`,
         totalBookings: totalCount,
-        topStaffName: topStaff ? `${topStaff.first_name} ${topStaff.last_name || ''}`.trim() : 'John Doe',
+        topStaffName: topStaff ? `${topStaff.first_name} ${topStaff.last_name || ''}`.trim() : 'None',
         ratios: {
           confirmed: { label: 'Confirmed', count: confirmedList.length, pct: totalCount > 0 ? (confirmedList.length / totalCount) * 100 : 0, color: 'bg-blue-500' },
           completed: { label: 'Completed', count: completedList.length, pct: totalCount > 0 ? (completedList.length / totalCount) * 100 : 0, color: 'bg-emerald-500' },
