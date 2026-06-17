@@ -21,7 +21,7 @@ class CategoryRepository {
     }
 
     /**
-     * 🧠 UNIFIED MATRIX LOCK: Securely captures NULL, 0, and explicit string mappings together
+     * Fetches active categories based on an optional parent_id parameter filter.
      */
     public function findAll(array $args = []): array {
         global $wpdb;
@@ -30,7 +30,6 @@ class CategoryRepository {
 
         if (isset($args['parent_id'])) {
             $parent_id = (int)$args['parent_id'];
-            // Handles explicit database NULL entries along with integer fallback blocks seamlessly
             if ($parent_id === 0) {
                 $where[] = "(parent_id IS NULL OR parent_id = 0)";
             } else {
@@ -49,6 +48,9 @@ class CategoryRepository {
         return $wpdb->get_results($sql, ARRAY_A) ?: [];
     }
 
+    /**
+     * 🧠 FIX UNLOCKED: Explicitly captures, sanitizes, and persists image_url keys into your SQL tables!
+     */
     public function save(array $data): ?int {
         global $wpdb;
         
@@ -57,7 +59,11 @@ class CategoryRepository {
             'description' => !empty($data['description']) ? sanitize_textarea_field($data['description']) : null
         ];
 
-        // 🌟 STRUCTURAL SAFEGUARD ALIGNED: Only maps to NULL if explicitly omitted on root addition paths
+        // 🌟 CAPTURE COVER IMAGES: Extract and clean image paths per enterprise standards
+        if (isset($data['image_url'])) {
+            $fields['image_url'] = !empty($data['image_url']) ? esc_url_raw($data['image_url']) : null;
+        }
+
         if (array_key_exists('parent_id', $data)) {
             if ($data['parent_id'] === '' || $data['parent_id'] === null || (int)$data['parent_id'] === 0) {
                 $fields['parent_id'] = null;

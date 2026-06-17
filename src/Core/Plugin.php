@@ -110,7 +110,7 @@ class Plugin {
         if (!$is_admin_page && !$is_staff_page) {
             return;
         }
-
+        wp_enqueue_media(); 
         $base_url  = plugin_dir_url(dirname(__DIR__))  . 'assets/app/';
         $base_path = plugin_dir_path(dirname(__DIR__)) . 'assets/app/';
 
@@ -119,7 +119,7 @@ class Plugin {
         $js_ver  = file_exists($base_path . 'index.js')  ? filemtime($base_path . 'index.js')  : '1.0.0';
 
         wp_enqueue_style('ignite-bookings-styles',  $base_url . 'index.css', [], $css_ver);
-        wp_enqueue_script('ignite-bookings-app',    $base_url . 'index.js',  ['jquery', 'wp-api-request'], $js_ver, true);
+        wp_enqueue_script('ignite-bookings-app',    $base_url . 'index.js',  ['jquery', 'wp-api-request', 'underscore'], $js_ver, true);
 
         // Fetch active logging attributes [INDEX]
         $current_user = wp_get_current_user();
